@@ -24,7 +24,8 @@ git ls-files | grep -v ".json" | while read f; do git blame -w -M -C -C --line-p
 total number of code linew written by all users with percentages utilizing all cores and the ripgrep library vs grep to increase speed
 ```bash
 git ls-files | rg -v '\.json$' | \
-xargs -P $(nproc) -I {} sh -c 'git blame -w -M -C -C --line-porcelain -- "$1" | rg -I "^author " 2>/dev/null' _ {} | \
+xargs -P $(nproc) -I {} sh -c 'git blame -w -M -C -C --line-porcelain -- "$1" | rg -I "^author "' _ {} | \
+rg -v "binary file matches" | \
 sort | uniq -c | sort -n | \
 awk '{
   count[NR] = $1
