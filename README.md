@@ -20,3 +20,22 @@ total number of code lines written by all users with percentages
 ```bash
 git ls-files | grep -v ".json" | while read f; do git blame -w -M -C -C --line-porcelain -- "$f" | grep -I '^author '; done | sort -f | uniq -ic | sort -n | { temp=$(</dev/stdin); IFS=$'\n' read -rd '' -A lines <<< $temp; total_lines=$(awk '{sum += $1} END {print sum}' <(echo $temp)); for line in $lines; do line_count=$(awk '{print $1}' <(echo $line)); percent=$(bc <<< "scale=3;$line_count/$total_lines*100") && echo "${line} ${percent}%"; done; echo "\n$total_lines total lines"}
 ```
+
+total number of code linew written by all users with percentages utilizing all cores and the ripgrep library vs grep to increase speed
+```bash
+git ls-files | rg -v '\.json$' | \
+xargs -P $(nproc) -I {} sh -c 'git blame -w -M -C -C --line-porcelain -- "$1" | rg -I "^author " 2>/dev/null' _ {} | \
+sort | uniq -c | sort -n | \
+awk '{
+  count[NR] = $1
+  line[NR] = $0
+  total += $1
+}
+END {
+  for(i=1; i<=NR; i++) {
+    percent = (count[i]/total)*100
+    printf "%s %.1f%%\n", line[i], percent
+  }
+  print "\n" total " total lines"
+}'
+```
